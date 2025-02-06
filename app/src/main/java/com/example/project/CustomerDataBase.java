@@ -1,41 +1,23 @@
 package com.example.project;
 
-import android.annotation.SuppressLint;
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
-import java.util.ArrayList;
+import android.content.ContentValues;
+import android.database.Cursor;
 
 public class CustomerDataBase extends SQLiteOpenHelper {
 
-    private static final String DATABASE_NAME = "my_app_database.db";
-    private static final String TABLE_NAME_CUSTOMERS = "tbl_customers";
+    private static final String DATABASE_NAME = "customers.db";
     private static final int DATABASE_VERSION = 1;
+    private static final String TABLE_CUSTOMERS = "customers";
+    private static final String COLUMN_NAME = "name";
+    private static final String COLUMN_PASSWORD = "password";
 
-    private static final String COLUMN_ID = "Id";
-    private static final String COLUMN_NAME = "Name";
-    private static final String COLUMN_SCORE = "Score";
-
-    private static final String[] ALL_COLUMNS = {COLUMN_ID, COLUMN_NAME, COLUMN_SCORE};
-
-    private static final String CREATE_TABLE_CUSTOMERS = "CREATE TABLE IF NOT EXISTS " +
-            TABLE_NAME_CUSTOMERS + "(" +
-            COLUMN_ID + " INTEGER PRIMARY KEY," +
-            COLUMN_NAME + " TEXT," +
-            COLUMN_SCORE + " INTEGER);";
-
-    private static ArrayList<Customer> customerList;
-
-    // Singleton instance
     private static CustomerDataBase instance;
 
     private CustomerDataBase(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        customerList = new ArrayList<>();
-        loadCustomersFromDatabase();
     }
 
     public static synchronized CustomerDataBase getInstance(Context context) {
@@ -47,109 +29,48 @@ public class CustomerDataBase extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(CREATE_TABLE_CUSTOMERS);
+        String createTableQuery = "CREATE TABLE " + TABLE_CUSTOMERS + " ("
+                + COLUMN_NAME + " TEXT PRIMARY KEY, "
+                + COLUMN_PASSWORD + " TEXT)";
+        db.execSQL(createTableQuery);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME_CUSTOMERS);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_CUSTOMERS);
         onCreate(db);
     }
 
-    private Customer insertCustomerInDatabase(Customer customer) {
-        try (SQLiteDatabase db = getWritableDatabase()) {
-            ContentValues values = new ContentValues();
-            values.put(COLUMN_NAME, customer.getName());
-            values.put(COLUMN_SCORE, customer.getScore());
+    public void addCustomer(Customer customer) {
+        SQLiteDatabase db = this.getWritableDatabase();
 
-            long id = db.insert(TABLE_NAME_CUSTOMERS, null, values);
-            customer.setId(id);
-            return customer;
-        }
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NAME, customer.getName());
+        values.put(COLUMN_PASSWORD, customer.getPassword());
+
+        db.insert(TABLE_CUSTOMERS, null, values);
+        db.close();
     }
 
-    private void updateCustomerInDatabase(Customer customer) {
-        try (SQLiteDatabase db = getWritableDatabase()) {
-            ContentValues values = new ContentValues();
-            values.put(COLUMN_NAME, customer.getName());
-            values.put(COLUMN_SCORE, customer.getScore());
-
-            db.update(TABLE_NAME_CUSTOMERS, values, COLUMN_ID + " = ?", new String[]{String.valueOf(customer.getId())});
-        }
-    }
-
-    public void deleteCustomerFromDatabase(long id) {
-        try (SQLiteDatabase db = getWritableDatabase()) {
-            db.delete(TABLE_NAME_CUSTOMERS, COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
-        }
-    }
-
-    @SuppressLint("Range")
-    private void loadCustomersFromDatabase() {
-        customerList.clear();
-        try (SQLiteDatabase db = getReadableDatabase();
-             Cursor cursor = db.query(TABLE_NAME_CUSTOMERS, ALL_COLUMNS, null, null, null, null, COLUMN_SCORE + " DESC")) {
-
-            while (cursor.moveToNext()) {
-                String name = cursor.getString(cursor.getColumnIndex(COLUMN_NAME));
-                int score = cursor.getInt(cursor.getColumnIndex(COLUMN_SCORE));
-                long id = cursor.getLong(cursor.getColumnIndex(COLUMN_ID));
-
-                Customer customer = new Customer(id, name, score);
-                customerList.add(customer);
-            }
-        }
-    }
-
-    public ArrayList<Customer> getAllCustomers() {
-        return new ArrayList<>(customerList);
-    }
-
-    public void insertOrUpdateCustomer(Customer customer) {
-        int customerIndex = findCustomerIndexInList(customer);
-
-        if (customerIndex != -1) {
-            updateCustomerInDatabase(customer);
-            customerList.set(customerIndex, customer);
-        } else {
-            Customer newCustomerWithId = insertCustomerInDatabase(customer);
-            customerList.add(newCustomerWithId);
-        }
-    }
-
-    private int findCustomerIndexInList(Customer customer) {
-        for (int i = 0; i < customerList.size(); i++) {
-            if (customerList.get(i).getId() == customer.getId()) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    @SuppressLint("Range")
     public Customer getCustomerByName(String name) {
-        try (SQLiteDatabase db = getReadableDatabase();
-             Cursor cursor = db.query(TABLE_NAME_CUSTOMERS, ALL_COLUMNS, COLUMN_NAME + " = ?", new String[]{name}, null, null, null)) {
+        SQLiteDatabase db = this.getReadableDatabase();
 
-            if (cursor != null && cursor.moveToFirst()) {
-                String customerName = cursor.getString(cursor.getColumnIndex(COLUMN_NAME));
-                int score = cursor.getInt(cursor.getColumnIndex(COLUMN_SCORE));
-                long id = cursor.getLong(cursor.getColumnIndex(COLUMN_ID));
+        Cursor cursor = db.query(TABLE_CUSTOMERS,
+                new String[]{COLUMN_NAME, COLUMN_PASSWORD},
+                COLUMN_NAME + "=?",
+                new String[]{name}, null, null, null);
 
-                return new Customer(id, customerName, score);
-            }
+        if (cursor != null && cursor.moveToFirst()) {
+            String customerName = cursor.getString(0);
+            String password = cursor.getString(1);
+            cursor.close();
+            return new Customer(customerName, password);
         }
+
+        if (cursor != null) {
+            cursor.close();
+        }
+
         return null;
-    }
-
-    public void insertOrUpdateCustomerByName(String name) {
-        Customer customer = getCustomerByName(name);
-
-        if (customer == null) {
-            customer = new Customer(name);  // Default constructor with name
-        }
-
-        customer.addScore();  // Increment the score
-        insertOrUpdateCustomer(customer);
     }
 }

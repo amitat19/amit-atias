@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+        <item
+            android:id="@+id/nav_home"
+            android:title="Home"
+            android:icon="@drawable/home_ic" />
+        <item
+            android:id="@+id/nav_appointment"
+            android:title="Book appointment"
+            android:icon="@drawable/bookappointment_ic" />
+        <item
+            android:id="@+id/nav_cancel"
+            android:title="Cancel appointment"
+            android:icon="@drawable/cancelappointment_ic" />
+        <item
+            android:id="@+id/nav_help"
+            android:title="Help"
+            android:icon="@drawable/chat_ic" />
+        <item
+            android:id="@+id/nav_map"
+            android:title="How to arrive"
+            android:icon="@drawable/map_ic" />
+        <item
+            android:id="@+id/nav_crew"
+            android:title="Our team"
+            android:icon="@drawable/crew" />
+</menu>

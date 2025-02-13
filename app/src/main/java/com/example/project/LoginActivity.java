@@ -53,7 +53,9 @@ public class LoginActivity extends AppCompatActivity {
 
         if (customer != null && customer.getPassword().equals(password)) {
             Toast.makeText(this, "התחברת בהצלחה!", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+            intent.putExtra("uname",customer.getName());
+            startActivity(intent);
             finish();
         } else {
             Toast.makeText(this, "שם משתמש או סיסמה שגויים", Toast.LENGTH_SHORT).show();

@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnLogin;
     private TextView welcomeText;
     private VideoView videoView;
+    private String user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,24 +35,20 @@ public class MainActivity extends AppCompatActivity {
         welcomeText = findViewById(R.id.txt_welcome);
         btnLogin = findViewById(R.id.btn_login);
 
-        // הפעלת הסרטון
+        // קבלת שם משתמש מתוך Intent
+        Intent intent = getIntent();
+        user = intent.getStringExtra("uname");
+
+        // הפעלת הסרטון בלולאה
         playIntroVideo();
 
-        // עדכון טקסט "שלום אורח" אם אין משתמש מחובר
-        String username = getLoggedInUser();
-        if (username != null) {
-            welcomeText.setText("שלום " + username + "!");
-        } else {
-            welcomeText.setText("שלום אורח!");
-        }
+        // עדכון תצוגת שם המשתמש
+        updateWelcomeMessage();
 
-        // לחצן מעבר למסך התחברות
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                startActivity(intent);
-            }
+        // הגדרת לחצן התחברות
+        btnLogin.setOnClickListener(v -> {
+            Intent loginIntent = new Intent(MainActivity.this, LoginActivity.class);
+            startActivity(loginIntent);
         });
 
         // הגדרת Toolbar
@@ -68,22 +65,10 @@ public class MainActivity extends AppCompatActivity {
         drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
 
-        // טיפול באירועי לחיצה בתפריט הניווט
-        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                int id = item.getItemId();
-
-                if (id == R.id.nav_home) {
-                    welcomeText.setText("בחרת בדף הבית!");
-                } else if (id == R.id.nav_appointment) {
-                    welcomeText.setText("בחרת לקבוע תור");
-                }
-
-                // סגירת ה-Drawer לאחר לחיצה
-                drawerLayout.closeDrawer(GravityCompat.START);
-                return true;
-            }
+        // טיפול בלחיצות על פריטי הניווט
+        navigationView.setNavigationItemSelectedListener(item -> {
+            handleNavigationItemSelected(item);
+            return true;
         });
     }
 
@@ -102,19 +87,30 @@ public class MainActivity extends AppCompatActivity {
         Uri uri = Uri.parse(videoPath);
         videoView.setVideoURI(uri);
 
-        // הגדרת לולאה על הווידאו
-        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mediaPlayer) {
-                mediaPlayer.setLooping(true);
-            }
+        // הפעלת הסרטון בלולאה
+        videoView.setOnPreparedListener(mediaPlayer -> {
+            mediaPlayer.setLooping(true);
+            videoView.start();
         });
 
-        videoView.start();
+        videoView.setOnCompletionListener(mp -> videoView.start()); // מנגנון גיבוי ללולאה
     }
 
-    private String getLoggedInUser() {
-        // בדיקה האם יש משתמש מחובר (כרגע מחזיר null כדוגמה)
-        return null;
+    private void updateWelcomeMessage() {
+        if (user != null && !user.isEmpty()) {
+            welcomeText.setText("שלום " + user + "!");
+        } else {
+            welcomeText.setText("שלום אורח!");
+        }
+    }
+
+    private void handleNavigationItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.nav_home) {
+            welcomeText.setText("בחרת בדף הבית!");
+        } else if (id == R.id.nav_appointment) {
+            welcomeText.setText("בחרת לקבוע תור");
+        }
+        drawerLayout.closeDrawer(GravityCompat.START);
     }
 }

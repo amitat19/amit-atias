@@ -52,10 +52,10 @@
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
                         android:orientation="vertical"
-                        android:padding="16dp"
-                        android:gravity="center">
+                        android:padding="16dp">
 
                         <TextView
                             android:id="@+id/txt_welcome"
@@ -70,7 +70,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="התחבר או הירשם" />
+                            android:text="לחץ להתחברות או הרשמה" />
 
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
@@ -86,6 +86,8 @@
         android:layout_gravity="start"
         app:menu="@menu/drawer_menu"
         app:headerLayout="@layout/nav_header"
-        android:background="#CA9E71"/>
+        app:itemTextColor="@color/black"
+        app:itemIconTint="@color/black"
+        android:background="#C19A6B"/>
 
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -109,7 +109,12 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.nav_home) {
             welcomeText.setText("בחרת בדף הבית!");
         } else if (id == R.id.nav_appointment) {
-            welcomeText.setText("בחרת לקבוע תור");
+            // מעבר לעמוד קביעת תור
+            Intent intent = new Intent(MainActivity.this, AppointmentActivity.class);
+            startActivity(intent);
+        }
+        else if (id == R.id.nav_my_appointments) {
+            startActivity(new Intent(MainActivity.this, MyAppointmentsActivity.class));
         }
         drawerLayout.closeDrawer(GravityCompat.START);
     }

@@ -9,8 +9,8 @@
             android:title="Book appointment"
             android:icon="@drawable/bookappointment_ic" />
         <item
-            android:id="@+id/nav_cancel"
-            android:title="Cancel appointment"
+            android:id="@+id/nav_my_appointments"
+            android:title="My appointments"
             android:icon="@drawable/cancelappointment_ic" />
         <item
             android:id="@+id/nav_help"

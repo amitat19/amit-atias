@@ -1,106 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:fillViewport="true"
     android:padding="16dp"
     android:background="@color/white">
 
-    <!-- כותרת -->
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="קביעת תור"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:textColor="@color/black"
-        android:layout_gravity="center" />
+        android:orientation="vertical">
 
-    <!-- בחירת איש צוות -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="בחר איש צוות:"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginTop="16dp" />
-
-    <RadioGroup
-        android:id="@+id/radio_group_staff"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
-
-        <RadioButton
-            android:id="@+id/radio_staff1"
+        <!-- כותרת -->
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="איש צוות 1" />
+            android:text="קביעת תור"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"
+            android:layout_gravity="center" />
 
-        <RadioButton
-            android:id="@+id/radio_staff2"
+        <!-- בחירת איש צוות -->
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="איש צוות 2" />
+            android:text="בחר איש צוות:"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
 
-        <RadioButton
-            android:id="@+id/radio_staff3"
+        <RadioGroup
+            android:id="@+id/radio_group_staff"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/radio_staff1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="איש צוות 1" />
+
+            <RadioButton
+                android:id="@+id/radio_staff2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="איש צוות 2" />
+
+            <RadioButton
+                android:id="@+id/radio_staff3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="איש צוות 3" />
+        </RadioGroup>
+
+        <!-- בחירת סוג טיפול -->
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="איש צוות 3" />
-    </RadioGroup>
+            android:text="בחר סוג טיפול:"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
 
-    <!-- בחירת סוג טיפול -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="בחר סוג טיפול:"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginTop="16dp" />
+        <Spinner
+            android:id="@+id/spinner_treatment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
-    <Spinner
-        android:id="@+id/spinner_treatment"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        <!-- בחירת תאריך -->
+        <Button
+            android:id="@+id/btn_pick_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="בחר תאריך"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="?android:attr/colorAccent"
+            android:textColor="@android:color/white"/>
 
-    <!-- בחירת תאריך -->
-    <Button
-        android:id="@+id/btn_pick_date"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="בחר תאריך"
-        android:layout_marginTop="16dp" />
+        <TextView
+            android:id="@+id/txt_selected_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="תאריך שנבחר: "
+            android:textSize="16sp"
+            android:layout_marginTop="8dp" />
 
-    <TextView
-        android:id="@+id/txt_selected_date"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="תאריך שנבחר: "
-        android:textSize="16sp"
-        android:layout_marginTop="8dp" />
+        <!-- בחירת שעה -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="בחר שעה:"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
 
-    <!-- בחירת שעה -->
-    <Button
-        android:id="@+id/btn_pick_time"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="בחר שעה"
-        android:layout_marginTop="16dp" />
+        <TextView
+            android:id="@+id/txt_selected_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="שעה שנבחרה: "
+            android:textSize="16sp"
+            android:layout_marginTop="8dp" />
 
-    <TextView
-        android:id="@+id/txt_selected_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="שעה שנבחרה: "
-        android:textSize="16sp"
-        android:layout_marginTop="8dp" />
+        <LinearLayout
+            android:id="@+id/grid_time_slots"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="10dp"/>
 
-    <!-- כפתור אישור -->
-    <Button
-        android:id="@+id/btn_confirm"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="אשר תור"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="#070000" />
-</LinearLayout>
+        <!-- כפתור אישור -->
+        <Button
+            android:id="@+id/btn_confirm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="אשר תור"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="@color/black"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+</ScrollView>

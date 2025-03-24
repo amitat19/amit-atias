@@ -1,11 +1,15 @@
 package com.example.project;
 
+import android.app.AlarmManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
-import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.VideoView;
@@ -70,6 +74,9 @@ public class MainActivity extends AppCompatActivity {
             handleNavigationItemSelected(item);
             return true;
         });
+
+        // יצירת ערוץ התראות
+        createNotificationChannel();
     }
 
     @Override
@@ -93,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
             videoView.start();
         });
 
-        videoView.setOnCompletionListener(mp -> videoView.start()); // מנגנון גיבוי ללולאה
+        videoView.setOnCompletionListener(mp -> videoView.start());
     }
 
     private void updateWelcomeMessage() {
@@ -112,10 +119,50 @@ public class MainActivity extends AppCompatActivity {
             // מעבר לעמוד קביעת תור
             Intent intent = new Intent(MainActivity.this, AppointmentActivity.class);
             startActivity(intent);
-        }
-        else if (id == R.id.nav_my_appointments) {
+        } else if (id == R.id.nav_my_appointments) {
             startActivity(new Intent(MainActivity.this, MyAppointmentsActivity.class));
         }
         drawerLayout.closeDrawer(GravityCompat.START);
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    "appointment_channel",
+                    "תזכורות תור",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("ערוץ לתזכורות תור");
+
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    public void setAlarm(Context context, long appointmentTime, String title, String time) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(context, AppointmentReminderReceiver.class);
+
+        intent.putExtra("title", title);
+        intent.putExtra("time", time);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context,
+                (int) appointmentTime,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE
+        );
+
+        long reminderTime = appointmentTime - 24 * 60 * 60 * 1000;
+
+        if (alarmManager != null) {
+            alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    reminderTime,
+                    pendingIntent
+            );
+        }
     }
 }

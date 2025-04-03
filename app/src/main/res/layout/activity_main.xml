@@ -27,8 +27,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="0dp"
-                android:gravity="center_horizontal">
+                android:gravity="center_horizontal"
+                android:padding="0dp">
 
                 <FrameLayout
                     android:layout_width="match_parent"
@@ -38,7 +38,6 @@
                         android:id="@+id/video_view"
                         android:layout_width="wrap_content"
                         android:layout_height="257dp" />
-
                 </FrameLayout>
 
                 <androidx.cardview.widget.CardView
@@ -46,8 +45,6 @@
                     android:layout_height="wrap_content"
                     app:cardCornerRadius="25dp"
                     app:cardElevation="8dp"
-                    android:layout_marginStart="0dp"
-                    android:layout_marginEnd="0dp"
                     android:translationY="-40dp">
 
                     <LinearLayout
@@ -74,6 +71,99 @@
 
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
+
+                <!-- קלף: קצת על המספרה -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_info"
+                    android:layout_width="350dp"
+                    android:layout_height="220dp"
+                    app:cardCornerRadius="25dp"
+                    app:cardElevation="6dp"
+                    android:layout_gravity="center">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <ImageView
+                            android:id="@+id/img_barbershop"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:src="@drawable/infoimg"
+                            android:scaleType="centerCrop" />
+
+                        <TextView
+                            android:id="@+id/txt_barbershop_info"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:text="המספרה שלנו נמצאת בכפר סבא ומספקת שירותים מקצועיים..."
+                            android:visibility="gone"
+                            android:gravity="center"
+                            android:textSize="16sp"
+                            android:textColor="@android:color/black"
+                            android:background="#E0E0E0"/>
+                    </FrameLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <Button
+                    android:id="@+id/btn_about_barbershop"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="קצת על המספרה"
+                    android:layout_marginTop="16dp"
+                    android:layout_gravity="center" />
+
+                <!-- קלף: מידע וכתובת -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_barbershop"
+                    android:layout_width="350dp"
+                    android:layout_height="220dp"
+                    app:cardCornerRadius="25dp"
+                    app:cardElevation="6dp"
+                    android:layout_gravity="center">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <ImageView
+                            android:id="@+id/img_romnav"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:src="@drawable/romimg"
+                            android:scaleType="centerCrop" />
+
+                        <TextView
+                            android:id="@+id/txt_address"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:text="כתובת: הכרמל 20, כפר סבא\nטלפון: 054-229-2255"
+                            android:visibility="gone"
+                            android:gravity="center"
+                            android:textSize="16sp"
+                            android:textColor="@android:color/black"
+                            android:background="#E0E0E0"/>
+                    </FrameLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <Button
+                    android:id="@+id/btn_show_details"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="כתובת ויצירת קשר"
+                    android:layout_marginTop="16dp"/>
+
+                <Button
+                    android:id="@+id/btn_show_location"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="הצג מיקום"
+                    android:layout_marginTop="16dp"/>
+
 
             </LinearLayout>
         </ScrollView>

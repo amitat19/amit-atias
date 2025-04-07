@@ -17,6 +17,12 @@
         android:theme="@style/Theme.Project"
         tools:targetApi="31">
         <activity
+            android:name=".BarberScheduleActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BarberLoginActivity"
+            android:exported="false" />
+        <activity
             android:name=".MyAppointmentsActivity"
             android:exported="false" />
         <activity

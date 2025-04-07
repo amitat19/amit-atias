@@ -3,42 +3,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:gravity="center">
+    android:padding="16dp">
 
     <TextView
-        android:id="@+id/txt_my_appointments"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="התורים שלי"
         android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_gravity="center"
-        android:paddingBottom="16dp" />
+        android:textAlignment="center"
+        android:layout_marginBottom="16dp"/>
 
-    <TextView
-        android:id="@+id/txt_no_appointments"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="אין תורים קבועים"
-        android:textSize="18sp"
-        android:visibility="gone"
-        android:layout_gravity="center"
-        android:paddingBottom="16dp" />
+    <ListView
+        android:id="@+id/appointments_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
 
     <Button
         android:id="@+id/btn_back"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="חזרה למסך הבית"
-        android:visibility="gone"
-        android:onClick="goBackHome"/>
-
-    <ListView
-        android:id="@+id/list_view_appointments"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:divider="@android:color/darker_gray"
-        android:dividerHeight="1dp" />
+        android:text="חזרה"
+        android:layout_gravity="center"/>
 
 </LinearLayout>

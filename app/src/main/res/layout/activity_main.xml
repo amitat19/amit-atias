@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -69,6 +70,13 @@
                             android:layout_marginTop="8dp"
                             android:text="לחץ להתחברות או הרשמה" />
 
+                        <Button
+                            android:id="@+id/btn_barber_login"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="כניסת ספרים" />
+
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
@@ -99,29 +107,22 @@
                             android:text="המספרה שלנו נמצאת בכפר סבא ומספקת שירותים מקצועיים..."
                             android:visibility="gone"
                             android:gravity="center"
+                            android:textColor="#000"
                             android:textSize="16sp"
-                            android:textColor="@android:color/black"
-                            android:background="#E0E0E0"/>
-                    </FrameLayout>
+                            android:padding="16dp" />
 
+                    </FrameLayout>
                 </androidx.cardview.widget.CardView>
 
-                <Button
-                    android:id="@+id/btn_about_barbershop"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="קצת על המספרה"
-                    android:layout_marginTop="16dp"
-                    android:layout_gravity="center" />
-
-                <!-- קלף: מידע וכתובת -->
+                <!-- קלף: מיקום המספרה -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/card_barbershop"
                     android:layout_width="350dp"
                     android:layout_height="220dp"
                     app:cardCornerRadius="25dp"
                     app:cardElevation="6dp"
-                    android:layout_gravity="center">
+                    android:layout_gravity="center"
+                    android:layout_marginTop="16dp">
 
                     <FrameLayout
                         android:layout_width="match_parent"
@@ -138,32 +139,37 @@
                             android:id="@+id/txt_address"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:text="כתובת: הכרמל 20, כפר סבא\nטלפון: 054-229-2255"
+                            android:text="הכרמל 20 כפר סבא\nטלפון: 054-2292255"
                             android:visibility="gone"
                             android:gravity="center"
+                            android:textColor="#000"
                             android:textSize="16sp"
-                            android:textColor="@android:color/black"
-                            android:background="#E0E0E0"/>
-                    </FrameLayout>
+                            android:padding="16dp" />
 
+                    </FrameLayout>
                 </androidx.cardview.widget.CardView>
+
+                <!-- כפתורים -->
+                <Button
+                    android:id="@+id/btn_show_location"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="הצג מיקום" />
 
                 <Button
                     android:id="@+id/btn_show_details"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="כתובת ויצירת קשר"
-                    android:layout_marginTop="16dp"/>
+                    android:layout_marginTop="8dp"
+                    android:text="הצג פרטים" />
 
                 <Button
-                    android:id="@+id/btn_show_location"
+                    android:id="@+id/btn_about_barbershop"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="הצג מיקום"
-                    android:layout_marginTop="16dp"/>
-
+                    android:layout_marginTop="8dp"
+                    android:text="קצת על המספרה" />
 
             </LinearLayout>
         </ScrollView>
@@ -174,10 +180,7 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        app:menu="@menu/drawer_menu"
         app:headerLayout="@layout/nav_header"
-        app:itemTextColor="@color/black"
-        app:itemIconTint="@color/black"
-        android:background="#C19A6B"/>
+        app:menu="@menu/nav_menu" />
 
 </androidx.drawerlayout.widget.DrawerLayout>

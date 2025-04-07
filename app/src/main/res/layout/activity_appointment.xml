@@ -25,7 +25,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="בחר איש צוות:"
+            android:text="בחר ספר:"
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_marginTop="16dp" />
@@ -39,19 +39,19 @@
                 android:id="@+id/radio_staff1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="איש צוות 1" />
+                android:text="דורון" />
 
             <RadioButton
                 android:id="@+id/radio_staff2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="איש צוות 2" />
+                android:text="שובל" />
 
             <RadioButton
                 android:id="@+id/radio_staff3"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="איש צוות 3" />
+                android:text="עושר" />
         </RadioGroup>
 
         <!-- בחירת סוג טיפול -->
@@ -100,15 +100,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="שעה שנבחרה: "
-            android:textSize="16sp"
-            android:layout_marginTop="8dp" />
+            android:textSize="16sp" />
 
         <LinearLayout
             android:id="@+id/grid_time_slots"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="10dp"/>
+            android:layout_marginTop="8dp"/>
 
         <!-- כפתור אישור -->
         <Button
@@ -117,8 +116,8 @@
             android:layout_height="wrap_content"
             android:text="אשר תור"
             android:layout_marginTop="16dp"
-            android:backgroundTint="@color/black"
-            android:textColor="@android:color/white" />
-    </LinearLayout>
+            android:backgroundTint="?android:attr/colorAccent"
+            android:textColor="@android:color/white"/>
 
+    </LinearLayout>
 </ScrollView>

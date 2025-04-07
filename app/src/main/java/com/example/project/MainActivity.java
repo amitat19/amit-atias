@@ -2,7 +2,9 @@ package com.example.project;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,16 +23,20 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import com.google.android.material.navigation.NavigationView;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private DrawerLayout drawerLayout;
-    private Button btnLogin, btnShowLocation, btnShowDetails, btnAboutBarbershop;
+    private Button btnLogin, btnShowLocation, btnShowDetails, btnAboutBarbershop, btnBarberLogin;
     private TextView welcomeText, txtAddress, txtBarbershopInfo;
     private VideoView videoView;
     private ImageView imgBarbershop, imgRomNav;
     private CardView cardBarbershop, cardInfo;
     private String user;
     private boolean isShowingText = false; // משתנה למעקב אחרי מצב התצוגה
+    private NavigationView navigationView;
+    private boolean isInfoVisible = false;
+    private boolean isAddressVisible = false;
+    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,17 +46,20 @@ public class MainActivity extends AppCompatActivity {
         // אתחול רכיבי ה-UI
         videoView = findViewById(R.id.video_view);
         welcomeText = findViewById(R.id.txt_welcome);
+        drawerLayout = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
         btnLogin = findViewById(R.id.btn_login);
+        btnBarberLogin = findViewById(R.id.btn_barber_login);
         imgBarbershop = findViewById(R.id.img_barbershop);
         imgRomNav = findViewById(R.id.img_romnav);
         btnShowLocation = findViewById(R.id.btn_show_location);
-
         btnShowDetails = findViewById(R.id.btn_show_details);
         btnAboutBarbershop = findViewById(R.id.btn_about_barbershop);
         txtAddress = findViewById(R.id.txt_address);
         txtBarbershopInfo = findViewById(R.id.txt_barbershop_info);
         cardInfo = findViewById(R.id.card_info);
         cardBarbershop = findViewById(R.id.card_barbershop);
+        sharedPreferences = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
 
         // קבלת שם משתמש מתוך Intent
         Intent intent = getIntent();
@@ -62,8 +71,37 @@ public class MainActivity extends AppCompatActivity {
         // עדכון תצוגת שם המשתמש
         updateWelcomeMessage();
 
-        // הגדרת לחצן התחברות
-        btnLogin.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, LoginActivity.class)));
+        // בדיקה אם המשתמש מחובר
+        String username = sharedPreferences.getString("username", "");
+        boolean isBarber = sharedPreferences.getBoolean("isBarber", false);
+
+        if (!username.isEmpty()) {
+            welcomeText.setText("שלום " + username);
+            btnLogin.setVisibility(View.GONE);
+            btnBarberLogin.setVisibility(View.GONE);
+            
+            // הגדרת התפריט המתאים
+            if (isBarber) {
+                navigationView.getMenu().clear();
+                navigationView.inflateMenu(R.menu.barber_menu);
+            } else {
+                navigationView.getMenu().clear();
+                navigationView.inflateMenu(R.menu.user_menu);
+            }
+        } else {
+            welcomeText.setText("שלום אורח");
+            btnLogin.setVisibility(View.VISIBLE);
+            btnBarberLogin.setVisibility(View.VISIBLE);
+        }
+
+        // טיפול בלחיצות על כפתורי התחברות
+        btnLogin.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+        });
+
+        btnBarberLogin.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, BarberLoginActivity.class));
+        });
 
         // הגדרת לחצן הצגת מיקום
         btnShowLocation.setOnClickListener(v -> openGoogleMaps());
@@ -78,10 +116,6 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // הגדרת DrawerLayout ו-NavigationView
-        drawerLayout = findViewById(R.id.drawer_layout);
-        NavigationView navigationView = findViewById(R.id.nav_view);
-
         // הגדרת Drawer Toggle
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawerLayout, toolbar, R.string.open_drawer, R.string.close_drawer);
@@ -89,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
         toggle.syncState();
 
         // טיפול בלחיצות על פריטי הניווט
-        navigationView.setNavigationItemSelectedListener(this::handleNavigationItemSelected);
+        navigationView.setNavigationItemSelectedListener(this);
 
         // יצירת ערוץ התראות
         createNotificationChannel();
@@ -152,16 +186,31 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private boolean handleNavigationItemSelected(@NonNull MenuItem item) {
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.nav_home) {
-            welcomeText.setText("בחרת בדף הבית!");
-        } else if (id == R.id.nav_appointment) {
+        
+        if (id == R.id.nav_new_appointment) {
             startActivity(new Intent(MainActivity.this, AppointmentActivity.class));
         } else if (id == R.id.nav_my_appointments) {
             startActivity(new Intent(MainActivity.this, MyAppointmentsActivity.class));
+        } else if (id == R.id.nav_barber_schedule) {
+            // קבלת שם הספר מההתחברות
+            String barberName = sharedPreferences.getString("username", "");
+            Intent intent = new Intent(MainActivity.this, BarberScheduleActivity.class);
+            intent.putExtra("barber_name", barberName);
+            startActivity(intent);
+        } else if (id == R.id.nav_logout) {
+            // מחיקת פרטי ההתחברות
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.clear();
+            editor.apply();
+            
+            // רענון המסך
+            recreate();
         }
-        drawerLayout.closeDrawer(GravityCompat.START);
+        
+        drawerLayout.closeDrawers();
         return true;
     }
 
@@ -178,6 +227,24 @@ public class MainActivity extends AppCompatActivity {
             if (manager != null) {
                 manager.createNotificationChannel(channel);
             }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // רענון מצב ההתחברות
+        String username = sharedPreferences.getString("username", "");
+        boolean isBarber = sharedPreferences.getBoolean("isBarber", false);
+        
+        if (!username.isEmpty()) {
+            welcomeText.setText("שלום " + username);
+            btnLogin.setVisibility(View.GONE);
+            btnBarberLogin.setVisibility(View.GONE);
+        } else {
+            welcomeText.setText("שלום אורח");
+            btnLogin.setVisibility(View.VISIBLE);
+            btnBarberLogin.setVisibility(View.VISIBLE);
         }
     }
 }

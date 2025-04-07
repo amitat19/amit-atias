@@ -37,7 +37,6 @@ public class AppointmentActivity extends AppCompatActivity {
         spinnerTreatment = findViewById(R.id.spinner_treatment);
         btnPickDate = findViewById(R.id.btn_pick_date);
         btnConfirm = findViewById(R.id.btn_confirm);
-        //btnBack = findViewById(R.id.btn_back);
         txtSelectedDate = findViewById(R.id.txt_selected_date);
         txtSelectedTime = findViewById(R.id.txt_selected_time);
         timeSlotsContainer = findViewById(R.id.grid_time_slots);
@@ -49,7 +48,7 @@ public class AppointmentActivity extends AppCompatActivity {
         spinnerTreatment.setEnabled(false);
         btnPickDate.setEnabled(false);
 
-        // מאזין לבחירת איש צוות
+        // מאזין לבחירת ספר
         radioGroupStaff.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId != -1) {
                 RadioButton selectedStaffButton = findViewById(checkedId);
@@ -111,7 +110,7 @@ public class AppointmentActivity extends AppCompatActivity {
     private void updateAvailableTimes() {
         timeSlotsContainer.removeAllViews();
         for (String time : timeSlots) {
-            String appointmentKey = selectedDate + " - " + time;
+            String appointmentKey = selectedDate + " - " + time + " - " + selectedStaff;
             if (!bookedAppointments.contains(appointmentKey)) {
                 Button timeButton = new Button(this);
                 timeButton.setText(time);
@@ -137,21 +136,89 @@ public class AppointmentActivity extends AppCompatActivity {
     private void confirmAppointment() {
         int selectedStaffId = radioGroupStaff.getCheckedRadioButtonId();
         if (selectedStaffId == -1 || selectedDate == null || selectedTime == null) {
-            Toast.makeText(this, "אנא בחר איש צוות, תאריך ושעה", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "אנא בחר ספר, תאריך ושעה", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        String appointment = selectedDate + " - " + selectedTime;
-        if (bookedAppointments.contains(appointment)) {
+        // קבלת שם המשתמש המחובר
+        SharedPreferences userPrefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+        String username = userPrefs.getString("username", "");
+
+        if (username.isEmpty()) {
+            Toast.makeText(this, "אינך מחובר למערכת", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // שמירת התור במסד הנתונים
+        CustomerDataBase db = CustomerDataBase.getInstance(this);
+        String appointmentKey = selectedStaff + "_" + selectedDate + "_" + selectedTime;
+        
+        if (db.isAppointmentBooked(appointmentKey)) {
             Toast.makeText(this, "התור הזה כבר תפוס!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        bookedAppointments.add(appointment);
-        sharedPreferences.edit().putStringSet("booked", bookedAppointments).apply();
-
+        // יצירת אובייקט תור
+        Appointment appointment = new Appointment(username, selectedStaff, selectedDate, selectedTime);
+        db.addAppointment(appointment);
+        
         Toast.makeText(this, "התור נשמר בהצלחה!", Toast.LENGTH_SHORT).show();
+        
+        // מעבר למסך התורים שלי
         startActivity(new Intent(this, MyAppointmentsActivity.class));
+        finish();
+    }
+
+    private String getSelectedBarber() {
+        int selectedId = radioGroupStaff.getCheckedRadioButtonId();
+        if (selectedId == -1) {
+            return "";
+        }
+        RadioButton selectedRadioButton = findViewById(selectedId);
+        return selectedRadioButton.getText().toString();
+    }
+
+    private String getSelectedTreatment() {
+        int selectedId = spinnerTreatment.getSelectedItemPosition();
+        if (selectedId == 0) {
+            return "";
+        }
+        return spinnerTreatment.getItemAtPosition(selectedId).toString();
+    }
+
+    private void saveAppointment() {
+        String selectedBarber = getSelectedBarber();
+        String selectedTreatment = getSelectedTreatment();
+        String selectedDate = txtSelectedDate.getText().toString();
+        String selectedTime = txtSelectedTime.getText().toString();
+
+        if (selectedBarber.isEmpty() || selectedTreatment.isEmpty() || selectedDate.isEmpty() || selectedTime.isEmpty()) {
+            Toast.makeText(this, "אנא מלא את כל השדות", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // קבלת שם המשתמש המחובר
+        SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+        String username = sharedPreferences.getString("username", "");
+
+        if (username.isEmpty()) {
+            Toast.makeText(this, "אינך מחובר למערכת", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // בדיקה אם התאריך והשעה כבר תפוסים
+        CustomerDataBase db = CustomerDataBase.getInstance(this);
+        if (db.isAppointmentTaken(selectedBarber, selectedDate, selectedTime)) {
+            Toast.makeText(this, "התור תפוס, אנא בחר זמן אחר", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // שמירת התור
+        String appointmentKey = selectedBarber + "_" + selectedDate + "_" + selectedTime;
+        String appointmentString = username + "_" + selectedBarber + "_" + selectedTreatment + "_" + selectedDate + "_" + selectedTime;
+        db.saveAppointment(appointmentKey, appointmentString);
+
+        Toast.makeText(this, "התור נקבע בהצלחה!", Toast.LENGTH_SHORT).show();
         finish();
     }
 }

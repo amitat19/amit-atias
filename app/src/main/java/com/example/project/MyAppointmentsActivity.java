@@ -8,65 +8,81 @@ import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 public class MyAppointmentsActivity extends AppCompatActivity {
 
-    private ListView listViewAppointments;
+    private ListView appointmentsListView;
     private Button btnBack;
     private SharedPreferences sharedPreferences;
     private ArrayAdapter<String> adapter;
-    private ArrayList<String> appointmentsList;
+    private CustomerDataBase db;
+    private List<Appointment> userAppointments;
+    private List<String> formattedAppointments;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_appointments);
 
-        listViewAppointments = findViewById(R.id.list_view_appointments);
+        appointmentsListView = findViewById(R.id.appointments_list);
         btnBack = findViewById(R.id.btn_back);
-        sharedPreferences = getSharedPreferences("Appointments", Context.MODE_PRIVATE);
+        sharedPreferences = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
+        db = CustomerDataBase.getInstance(this);
 
-        Set<String> appointmentsSet = sharedPreferences.getStringSet("booked", new HashSet<>());
-        appointmentsList = new ArrayList<>(appointmentsSet);
+        // קבלת שם המשתמש המחובר
+        String username = sharedPreferences.getString("username", "");
+        Toast.makeText(this, "משתמש מחובר: " + username, Toast.LENGTH_SHORT).show();
 
-        if (appointmentsList.isEmpty()) {
-            Toast.makeText(this, "אין לך תורים", Toast.LENGTH_LONG).show();
-            btnBack.setVisibility(View.VISIBLE);
-        } else {
-            adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, appointmentsList);
-            listViewAppointments.setAdapter(adapter);
+        if (username.isEmpty()) {
+            Toast.makeText(this, "אינך מחובר למערכת", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
         }
 
-        listViewAppointments.setOnItemClickListener((parent, view, position, id) -> {
-            removeAppointment(position);
+        // קבלת כל התורים של המשתמש
+        userAppointments = db.getCustomerAppointments(username);
+        
+        // המרת התורים לפורמט קריא
+        formattedAppointments = new ArrayList<>();
+        for (Appointment appointment : userAppointments) {
+            String formattedAppointment = "תור עם " + appointment.getBarberName() + 
+                                        " בתאריך " + appointment.getDate() + 
+                                        " בשעה " + appointment.getTime();
+            formattedAppointments.add(formattedAppointment);
+        }
+        
+        if (formattedAppointments.isEmpty()) {
+            Toast.makeText(this, "אין לך תורים פעילים", Toast.LENGTH_SHORT).show();
+        }
+
+        // הצגת התורים ב-ListView
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, formattedAppointments);
+        appointmentsListView.setAdapter(adapter);
+
+        appointmentsListView.setOnItemClickListener((parent, view, position, id) -> {
+            // מחיקת התור מהמסד הנתונים
+            Appointment appointment = userAppointments.get(position);
+            db.deleteAppointment(appointment.getCustomerName(), appointment.getDate(), appointment.getTime());
+            
+            // עדכון הרשימות
+            userAppointments.remove(position);
+            formattedAppointments.remove(position);
+            adapter.notifyDataSetChanged();
+            
+            Toast.makeText(this, "התור נמחק!", Toast.LENGTH_SHORT).show();
         });
 
         btnBack.setOnClickListener(v -> {
             startActivity(new Intent(MyAppointmentsActivity.this, MainActivity.class));
-            finish();  // לסיים את הפעולה ולחזור לדף הראשי
+            finish();
         });
-    }
-
-    private void removeAppointment(int position) {
-        Set<String> appointmentsSet = sharedPreferences.getStringSet("booked", new HashSet<>());
-        ArrayList<String> tempList = new ArrayList<>(appointmentsSet);
-
-        if (position >= 0 && position < tempList.size()) {
-            tempList.remove(position);
-            appointmentsSet = new HashSet<>(tempList);
-            sharedPreferences.edit().putStringSet("booked", appointmentsSet).apply();
-
-            appointmentsList.remove(position);
-            adapter.notifyDataSetChanged();
-            Toast.makeText(this, "התור נמחק!", Toast.LENGTH_SHORT).show();
-        }
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        finish();  // לסיים את הפעולה ולחזור לעמוד הקודם
+        finish();
     }
 }

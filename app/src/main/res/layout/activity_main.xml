@@ -171,6 +171,32 @@
                     android:layout_marginTop="8dp"
                     android:text="קצת על המספרה" />
 
+                <androidx.cardview.widget.CardView
+                    android:layout_width="200dp"
+                    android:layout_height="200dp"
+                    android:layout_marginTop="20dp"
+                    android:layout_gravity="center_horizontal"
+                    app:cardCornerRadius="100dp"
+                    app:cardElevation="8dp">
+
+                    <ImageView
+                        android:id="@+id/img_gallery"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:contentDescription="גלריית תמונות" />
+
+                </androidx.cardview.widget.CardView>
+
+                <TextView
+                    android:id="@+id/txt_image_counter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_gravity="center_horizontal"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp" />
+
             </LinearLayout>
         </ScrollView>
     </LinearLayout>

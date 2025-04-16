@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import android.content.SharedPreferences;
 import java.util.Map;
+import android.util.Log;
 
 public class CustomerDataBase extends SQLiteOpenHelper {
 
@@ -146,28 +147,45 @@ public class CustomerDataBase extends SQLiteOpenHelper {
         return appointments;
     }
 
-    public List<Appointment> getBarberAppointments(String barberName) {
-        List<Appointment> appointments = new ArrayList<>();
+    public List<String> getBarberAppointments(String barberName) {
+        List<String> appointments = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
+        
+        Log.d("CustomerDataBase", "Getting appointments for barber: " + barberName);
+        
+        try {
+            // שליפת כל התורים של הספר
+            String query = "SELECT " + COLUMN_CUSTOMER_NAME + ", " + COLUMN_DATE + ", " + COLUMN_TIME + 
+                         " FROM " + TABLE_APPOINTMENTS + 
+                         " WHERE " + COLUMN_BARBER_NAME + " = ?";
+            Cursor cursor = db.rawQuery(query, new String[]{barberName});
 
-        Cursor cursor = db.query(TABLE_APPOINTMENTS,
-                new String[]{COLUMN_APPOINTMENT_ID, COLUMN_CUSTOMER_NAME, COLUMN_BARBER_NAME, COLUMN_DATE, COLUMN_TIME},
-                COLUMN_BARBER_NAME + "=?",
-                new String[]{barberName}, null, null, COLUMN_DATE + ", " + COLUMN_TIME);
+            Log.d("CustomerDataBase", "Query executed: " + query);
+            Log.d("CustomerDataBase", "Number of appointments found: " + (cursor != null ? cursor.getCount() : 0));
 
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                Appointment appointment = new Appointment(
-                    cursor.getString(1), // customerName
-                    cursor.getString(2), // barberName
-                    cursor.getString(3), // date
-                    cursor.getString(4)  // time
-                );
-                appointments.add(appointment);
-            } while (cursor.moveToNext());
-            cursor.close();
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    String customerName = cursor.getString(0);
+                    String date = cursor.getString(1);
+                    String time = cursor.getString(2);
+                    
+                    Log.d("CustomerDataBase", "Found appointment - Customer: " + customerName + 
+                          ", Date: " + date + ", Time: " + time);
+                    
+                    // יצירת מחרוזת מפורמטת של התור
+                    String formattedAppointment = String.format("לקוח: %s\nתאריך: %s\nשעה: %s",
+                        customerName, date, time);
+                    appointments.add(formattedAppointment);
+                }
+                cursor.close();
+            }
+        } catch (Exception e) {
+            Log.e("CustomerDataBase", "Error getting barber appointments", e);
+        } finally {
+            db.close();
         }
-
+        
+        Log.d("CustomerDataBase", "Returning " + appointments.size() + " appointments");
         return appointments;
     }
 
@@ -186,14 +204,20 @@ public class CustomerDataBase extends SQLiteOpenHelper {
 
     public void saveAppointment(String key, String appointment) {
         String[] parts = appointment.split("_");
-        if (parts.length != 5) return;
+        if (parts.length != 5) {
+            Log.e("CustomerDataBase", "Invalid appointment format: " + appointment);
+            return;
+        }
         
         String customerName = parts[0];
         String barberName = parts[1];
-        String treatment = parts[2];
         String date = parts[3];
         String time = parts[4];
         
+        Log.d("CustomerDataBase", "Saving appointment - Customer: " + customerName + 
+              ", Barber: " + barberName + ", Date: " + date + ", Time: " + time);
+        
+        // שמירה במסד הנתונים
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COLUMN_CUSTOMER_NAME, customerName);
@@ -201,8 +225,19 @@ public class CustomerDataBase extends SQLiteOpenHelper {
         values.put(COLUMN_DATE, date);
         values.put(COLUMN_TIME, time);
         
-        db.insert(TABLE_APPOINTMENTS, null, values);
+        long result = db.insert(TABLE_APPOINTMENTS, null, values);
+        if (result == -1) {
+            Log.e("CustomerDataBase", "Failed to save appointment to database");
+        } else {
+            Log.d("CustomerDataBase", "Successfully saved appointment to database with ID: " + result);
+        }
         db.close();
+        
+        // שמירה ב-SharedPreferences
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(key, appointment);
+        editor.apply();
+        Log.d("CustomerDataBase", "Saved appointment to SharedPreferences with key: " + key);
     }
 
     public String getAppointment(String key) {

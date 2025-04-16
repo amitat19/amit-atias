@@ -1,27 +1,44 @@
 package com.example.project;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.MediaStore;
+import android.util.Base64;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import com.google.android.material.navigation.NavigationView;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -37,6 +54,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private boolean isInfoVisible = false;
     private boolean isAddressVisible = false;
     private SharedPreferences sharedPreferences;
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
+    private static final int REQUEST_IMAGE_PICK = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,9 +80,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         cardBarbershop = findViewById(R.id.card_barbershop);
         sharedPreferences = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE);
 
-        // קבלת שם משתמש מתוך Intent
+        // הגדרת Toolbar
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setHomeAsUpIndicator(R.drawable.swisserslogoremovebg);
+        }
+
+        // קבלת שם משתמש מתוך Intent או SharedPreferences
         Intent intent = getIntent();
         user = intent.getStringExtra("uname");
+        if (user == null || user.isEmpty()) {
+            user = sharedPreferences.getString("username", "");
+        }
 
         // הפעלת הסרטון בלולאה
         playIntroVideo();
@@ -111,10 +141,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         // כפתור להחלפה בין תמונה לטקסט
         btnAboutBarbershop.setOnClickListener(v -> toggleBarbershopInfo());
-
-        // הגדרת Toolbar
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         // הגדרת Drawer Toggle
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -191,27 +217,52 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         int id = item.getItemId();
         
         if (id == R.id.nav_new_appointment) {
-            startActivity(new Intent(MainActivity.this, AppointmentActivity.class));
+            Intent intent = new Intent(MainActivity.this, AppointmentActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_my_appointments) {
-            startActivity(new Intent(MainActivity.this, MyAppointmentsActivity.class));
+            Intent intent = new Intent(MainActivity.this, MyAppointmentsActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_barber_schedule) {
-            // קבלת שם הספר מההתחברות
+            SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
             String barberName = sharedPreferences.getString("username", "");
             Intent intent = new Intent(MainActivity.this, BarberScheduleActivity.class);
             intent.putExtra("barber_name", barberName);
             startActivity(intent);
+        } else if (id == R.id.nav_upload_photo) {
+            // בדיקת הרשאות
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, 
+                    new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE}, 
+                    1);
+            } else {
+                showImagePickerDialog();
+            }
+        } else if (id == R.id.nav_view_gallery) {
+            Intent intent = new Intent(MainActivity.this, GalleryActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_logout) {
-            // מחיקת פרטי ההתחברות
-            SharedPreferences.Editor editor = sharedPreferences.edit();
+            SharedPreferences.Editor editor = getSharedPreferences("UserPrefs", MODE_PRIVATE).edit();
             editor.clear();
             editor.apply();
-            
-            // רענון המסך
             recreate();
         }
         
-        drawerLayout.closeDrawers();
+        drawerLayout.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                showImagePickerDialog();
+            } else {
+                Toast.makeText(this, "נדרשות הרשאות מצלמה וגלריה להעלאת תמונות", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     private void createNotificationChannel() {
@@ -230,21 +281,70 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // רענון מצב ההתחברות
-        String username = sharedPreferences.getString("username", "");
-        boolean isBarber = sharedPreferences.getBoolean("isBarber", false);
+    private void showImagePickerDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("בחר פעולה");
+        builder.setItems(new String[]{"צלם תמונה", "בחר מהגלריה"}, (dialog, which) -> {
+            if (which == 0) {
+                // צילום תמונה
+                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                } else {
+                    Toast.makeText(this, "לא נמצאה אפליקציית מצלמה במכשיר", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                // בחירה מהגלריה
+                Intent pickPhotoIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                if (pickPhotoIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivityForResult(pickPhotoIntent, REQUEST_IMAGE_PICK);
+                } else {
+                    Toast.makeText(this, "לא נמצאה אפליקציית גלריה במכשיר", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        builder.show();
+    }
+
+    private void saveImageToGallery(Bitmap bitmap) {
+        // המרת התמונה ל-Base64
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] imageBytes = baos.toByteArray();
+        String imageString = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+
+        // שמירת התמונה ב-SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("GalleryImages", MODE_PRIVATE);
+        int imageCount = prefs.getInt("image_count", 0);
         
-        if (!username.isEmpty()) {
-            welcomeText.setText("שלום " + username);
-            btnLogin.setVisibility(View.GONE);
-            btnBarberLogin.setVisibility(View.GONE);
-        } else {
-            welcomeText.setText("שלום אורח");
-            btnLogin.setVisibility(View.VISIBLE);
-            btnBarberLogin.setVisibility(View.VISIBLE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("image_" + imageCount, imageString);
+        editor.putInt("image_count", imageCount + 1);
+        editor.apply();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            Bitmap imageBitmap = null;
+            if (requestCode == REQUEST_IMAGE_CAPTURE) {
+                Bundle extras = data.getExtras();
+                imageBitmap = (Bitmap) extras.get("data");
+            } else if (requestCode == REQUEST_IMAGE_PICK) {
+                try {
+                    Uri imageUri = data.getData();
+                    imageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (imageBitmap != null) {
+                // שמירת התמונה ב-SharedPreferences
+                saveImageToGallery(imageBitmap);
+                Toast.makeText(this, "התמונה נשמרה בהצלחה", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 }

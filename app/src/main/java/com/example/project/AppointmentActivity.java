@@ -149,18 +149,24 @@ public class AppointmentActivity extends AppCompatActivity {
             return;
         }
 
-        // שמירת התור במסד הנתונים
-        CustomerDataBase db = CustomerDataBase.getInstance(this);
+        // שמירת התור
         String appointmentKey = selectedStaff + "_" + selectedDate + "_" + selectedTime;
+        String appointmentString = username + "_" + selectedStaff + "_" + selectedTreatment + "_" + selectedDate + "_" + selectedTime;
         
-        if (db.isAppointmentBooked(appointmentKey)) {
-            Toast.makeText(this, "התור הזה כבר תפוס!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // יצירת אובייקט תור
-        Appointment appointment = new Appointment(username, selectedStaff, selectedDate, selectedTime);
-        db.addAppointment(appointment);
+        // שמירה במסד הנתונים
+        CustomerDataBase db = CustomerDataBase.getInstance(this);
+        db.saveAppointment(appointmentKey, appointmentString);
+        
+        // שמירה ב-SharedPreferences
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(appointmentKey, appointmentString);
+        
+        // שמירת רשימת התורים התפוסים
+        Set<String> updatedBookedAppointments = new HashSet<>(bookedAppointments);
+        updatedBookedAppointments.add(appointmentKey);
+        editor.putStringSet("booked", updatedBookedAppointments);
+        
+        editor.apply();
         
         Toast.makeText(this, "התור נשמר בהצלחה!", Toast.LENGTH_SHORT).show();
         
@@ -198,8 +204,8 @@ public class AppointmentActivity extends AppCompatActivity {
         }
 
         // קבלת שם המשתמש המחובר
-        SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
-        String username = sharedPreferences.getString("username", "");
+        SharedPreferences userPrefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+        String username = userPrefs.getString("username", "");
 
         if (username.isEmpty()) {
             Toast.makeText(this, "אינך מחובר למערכת", Toast.LENGTH_SHORT).show();
@@ -214,9 +220,14 @@ public class AppointmentActivity extends AppCompatActivity {
         }
 
         // שמירת התור
-        String appointmentKey = selectedBarber + "_" + selectedDate + "_" + selectedTime;
         String appointmentString = username + "_" + selectedBarber + "_" + selectedTreatment + "_" + selectedDate + "_" + selectedTime;
-        db.saveAppointment(appointmentKey, appointmentString);
+        
+        // שמירה במסד הנתונים וב-SharedPreferences
+        db.saveAppointment(appointmentString, appointmentString);
+        
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(appointmentString, appointmentString);
+        editor.apply();
 
         Toast.makeText(this, "התור נקבע בהצלחה!", Toast.LENGTH_SHORT).show();
         finish();

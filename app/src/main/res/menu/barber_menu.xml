@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_barber_schedule"
+        android:title="יומן תורים" />
+    <item
+        android:id="@+id/nav_upload_photo"
+        android:title="העלה תמונה" />
+    <item
+        android:id="@+id/nav_view_gallery"
+        android:title="צפה בגלריה" />
+    <item
+        android:id="@+id/nav_logout"
+        android:title="התנתק" />
+</menu> 

@@ -23,6 +23,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
@@ -56,11 +58,54 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private SharedPreferences sharedPreferences;
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int REQUEST_IMAGE_PICK = 2;
+    private ActivityResultLauncher<Intent> cameraLauncher;
+    private ActivityResultLauncher<Intent> galleryLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // אתחול ה-ActivityResultLaunchers
+        cameraLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    Intent data = result.getData();
+                    if (data != null) {
+                        Bundle extras = data.getExtras();
+                        Bitmap imageBitmap = (Bitmap) extras.get("data");
+                        if (imageBitmap != null) {
+                            saveImageToGallery(imageBitmap);
+                            Toast.makeText(this, "התמונה נשמרה בהצלחה", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+            }
+        );
+
+        galleryLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    Intent data = result.getData();
+                    if (data != null) {
+                        try {
+                            Uri imageUri = data.getData();
+                            Bitmap imageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+                            if (imageBitmap != null) {
+                                saveImageToGallery(imageBitmap);
+                                Toast.makeText(this, "התמונה נשמרה בהצלחה", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        );
+
+
 
         // אתחול רכיבי ה-UI
         videoView = findViewById(R.id.video_view);
@@ -229,15 +274,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             intent.putExtra("barber_name", barberName);
             startActivity(intent);
         } else if (id == R.id.nav_upload_photo) {
-            // בדיקת הרשאות
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, 
-                    new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE}, 
-                    1);
-            } else {
-                showImagePickerDialog();
-            }
+            checkAndRequestPermissions();
         } else if (id == R.id.nav_view_gallery) {
             Intent intent = new Intent(MainActivity.this, GalleryActivity.class);
             startActivity(intent);
@@ -252,9 +289,61 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
+    private void checkAndRequestPermissions() {
+        List<String> permissionsToRequest = new ArrayList<>();
+
+        // Add camera permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.CAMERA);
+        }
+
+        // For SDK 33 and above, use READ_MEDIA_IMAGES instead of READ_EXTERNAL_STORAGE
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // API 33+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
+                    != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.READ_MEDIA_IMAGES);
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            }
+        }
+
+        if (!permissionsToRequest.isEmpty()) {
+            ActivityCompat.requestPermissions(
+                    this,
+                    permissionsToRequest.toArray(new String[0]),
+                    1
+            );
+        } else {
+            showImagePickerDialog();
+        }
+    }
+
+    private void showImagePickerDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("בחר פעולה");
+        builder.setItems(new String[]{"צלם תמונה", "בחר מהגלריה"}, (dialog, which) -> {
+            if (which == 0) {
+                // צילום תמונה
+                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                cameraLauncher.launch(takePictureIntent);
+            } else {
+                // בחירה מהגלריה
+                Intent pickPhotoIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                galleryLauncher.launch(pickPhotoIntent);
+            }
+        });
+        builder.show();
+    }
+
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
         if (requestCode == 1) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED &&
                 grantResults[1] == PackageManager.PERMISSION_GRANTED) {
@@ -281,31 +370,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    private void showImagePickerDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("בחר פעולה");
-        builder.setItems(new String[]{"צלם תמונה", "בחר מהגלריה"}, (dialog, which) -> {
-            if (which == 0) {
-                // צילום תמונה
-                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                    startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-                } else {
-                    Toast.makeText(this, "לא נמצאה אפליקציית מצלמה במכשיר", Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                // בחירה מהגלריה
-                Intent pickPhotoIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                if (pickPhotoIntent.resolveActivity(getPackageManager()) != null) {
-                    startActivityForResult(pickPhotoIntent, REQUEST_IMAGE_PICK);
-                } else {
-                    Toast.makeText(this, "לא נמצאה אפליקציית גלריה במכשיר", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-        builder.show();
-    }
-
     private void saveImageToGallery(Bitmap bitmap) {
         // המרת התמונה ל-Base64
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -321,30 +385,5 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         editor.putString("image_" + imageCount, imageString);
         editor.putInt("image_count", imageCount + 1);
         editor.apply();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            Bitmap imageBitmap = null;
-            if (requestCode == REQUEST_IMAGE_CAPTURE) {
-                Bundle extras = data.getExtras();
-                imageBitmap = (Bitmap) extras.get("data");
-            } else if (requestCode == REQUEST_IMAGE_PICK) {
-                try {
-                    Uri imageUri = data.getData();
-                    imageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            if (imageBitmap != null) {
-                // שמירת התמונה ב-SharedPreferences
-                saveImageToGallery(imageBitmap);
-                Toast.makeText(this, "התמונה נשמרה בהצלחה", Toast.LENGTH_SHORT).show();
-            }
-        }
     }
 }

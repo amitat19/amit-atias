@@ -53,34 +53,15 @@ public class BarberScheduleActivity extends AppCompatActivity {
     }
 
     private void loadAppointments() {
-        try {
-            Log.d("BarberSchedule", "Loading appointments for barber: " + barberName);
-            
-            // קבלת כל התורים ממסד הנתונים
-            List<String> appointments = db.getBarberAppointments(barberName);
-            
-            Log.d("BarberSchedule", "Retrieved " + appointments.size() + " appointments");
-            for (String appointment : appointments) {
-                Log.d("BarberSchedule", "Appointment: " + appointment);
-            }
-            
-            if (appointments != null && !appointments.isEmpty()) {
-                // מיון התורים לפי תאריך ושעה
-                Collections.sort(appointments);
-                
-                // הצגת התורים ב-ListView
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, appointments);
-                appointmentsList.setAdapter(adapter);
-                Log.d("BarberSchedule", "Appointments displayed in ListView");
-            } else {
-                Toast.makeText(this, "אין תורים פעילים", Toast.LENGTH_SHORT).show();
-                Log.d("BarberSchedule", "No appointments found");
-            }
-            
-        } catch (Exception e) {
-            Log.e("BarberSchedule", "Error loading appointments", e);
-            Toast.makeText(this, "שגיאה בטעינת התורים", Toast.LENGTH_SHORT).show();
-        }
+        CustomerDataBase db = CustomerDataBase.getInstance(this);
+        List<String> appointments = db.getBarberAppointments(barberName);
+        
+        Log.d("BarberScheduleActivity", "Loaded " + appointments.size() + " appointments");
+        
+        // עדכון ה-ListView
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, 
+            android.R.layout.simple_list_item_1, appointments);
+        appointmentsList.setAdapter(adapter);
     }
 
     @Override

@@ -39,19 +39,22 @@
                 android:id="@+id/radio_staff1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="דורון" />
+                android:text="דורון"
+                android:tag="doron"/>
 
             <RadioButton
                 android:id="@+id/radio_staff2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="שובל" />
+                android:text="שובל"
+                android:tag="shoval"/>
 
             <RadioButton
                 android:id="@+id/radio_staff3"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="עושר" />
+                android:text="אושר"
+                android:tag="osher"/>
         </RadioGroup>
 
         <!-- בחירת סוג טיפול -->

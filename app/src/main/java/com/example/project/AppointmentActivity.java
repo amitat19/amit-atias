@@ -26,6 +26,8 @@ public class AppointmentActivity extends AppCompatActivity {
             "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
             "16:00", "16:30", "17:00", "17:30"
     );
+    private CustomerDataBase customerDataBase;
+    private String customerName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +46,9 @@ public class AppointmentActivity extends AppCompatActivity {
         sharedPreferences = getSharedPreferences("Appointments", Context.MODE_PRIVATE);
         bookedAppointments = new HashSet<>(sharedPreferences.getStringSet("booked", new HashSet<>()));
 
+        customerDataBase = CustomerDataBase.getInstance(this);
+        customerName = getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("username", "");
+
         // תחילה - מנע גישה לתאריך ולשעה עד לבחירת צוות וטיפול
         spinnerTreatment.setEnabled(false);
         btnPickDate.setEnabled(false);
@@ -52,7 +57,7 @@ public class AppointmentActivity extends AppCompatActivity {
         radioGroupStaff.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId != -1) {
                 RadioButton selectedStaffButton = findViewById(checkedId);
-                selectedStaff = selectedStaffButton.getText().toString();
+                selectedStaff = selectedStaffButton.getTag().toString();
                 spinnerTreatment.setEnabled(true);
             }
         });
@@ -134,9 +139,14 @@ public class AppointmentActivity extends AppCompatActivity {
     }
 
     private void confirmAppointment() {
-        int selectedStaffId = radioGroupStaff.getCheckedRadioButtonId();
-        if (selectedStaffId == -1 || selectedDate == null || selectedTime == null) {
+        if (selectedStaff == null || selectedDate == null || selectedTime == null) {
             Toast.makeText(this, "אנא בחר ספר, תאריך ושעה", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // בדיקה אם התור כבר תפוס
+        if (!customerDataBase.isAppointmentAvailable(selectedStaff, selectedDate, selectedTime)) {
+            Toast.makeText(this, "התור שבחרת תפוס, אנא בחר תור אחר", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -149,29 +159,13 @@ public class AppointmentActivity extends AppCompatActivity {
             return;
         }
 
-        // שמירת התור
-        String appointmentKey = selectedStaff + "_" + selectedDate + "_" + selectedTime;
+        // יצירת מחרוזת התור
         String appointmentString = username + "_" + selectedStaff + "_" + selectedTreatment + "_" + selectedDate + "_" + selectedTime;
         
-        // שמירה במסד הנתונים
-        CustomerDataBase db = CustomerDataBase.getInstance(this);
-        db.saveAppointment(appointmentKey, appointmentString);
-        
-        // שמירה ב-SharedPreferences
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(appointmentKey, appointmentString);
-        
-        // שמירת רשימת התורים התפוסים
-        Set<String> updatedBookedAppointments = new HashSet<>(bookedAppointments);
-        updatedBookedAppointments.add(appointmentKey);
-        editor.putStringSet("booked", updatedBookedAppointments);
-        
-        editor.apply();
+        // שמירת התור במסד הנתונים
+        customerDataBase.saveAppointment(appointmentString);
         
         Toast.makeText(this, "התור נשמר בהצלחה!", Toast.LENGTH_SHORT).show();
-        
-        // מעבר למסך התורים שלי
-        startActivity(new Intent(this, MyAppointmentsActivity.class));
         finish();
     }
 
@@ -222,13 +216,9 @@ public class AppointmentActivity extends AppCompatActivity {
         // שמירת התור
         String appointmentString = username + "_" + selectedBarber + "_" + selectedTreatment + "_" + selectedDate + "_" + selectedTime;
         
-        // שמירה במסד הנתונים וב-SharedPreferences
-        db.saveAppointment(appointmentString, appointmentString);
+        // שמירה במסד הנתונים
+        db.saveAppointment(appointmentString);
         
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(appointmentString, appointmentString);
-        editor.apply();
-
         Toast.makeText(this, "התור נקבע בהצלחה!", Toast.LENGTH_SHORT).show();
         finish();
     }

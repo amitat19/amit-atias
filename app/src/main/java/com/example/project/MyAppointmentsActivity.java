@@ -1,11 +1,14 @@
 package com.example.project;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,18 +64,34 @@ public class MyAppointmentsActivity extends AppCompatActivity {
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, formattedAppointments);
         appointmentsListView.setAdapter(adapter);
 
-        appointmentsListView.setOnItemClickListener((parent, view, position, id) -> {
-            // מחיקת התור מהמסד הנתונים
-            Appointment appointment = userAppointments.get(position);
-            db.deleteAppointment(appointment.getCustomerName(), appointment.getDate(), appointment.getTime());
-            
-            // עדכון הרשימות
-            userAppointments.remove(position);
-            formattedAppointments.remove(position);
-            adapter.notifyDataSetChanged();
-            
-            Toast.makeText(this, "התור נמחק!", Toast.LENGTH_SHORT).show();
+        appointmentsListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                new AlertDialog.Builder(MyAppointmentsActivity.this)
+                        .setTitle("אישור מחיקה")
+                        .setMessage("האם אתה בטוח שברצונך למחוק את התור?")
+                        .setPositiveButton("כן", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // מחיקת התור מהמסד הנתונים
+                                Appointment appointment = userAppointments.get(position);
+                                db.deleteAppointment(appointment.getCustomerName(), appointment.getDate(), appointment.getTime());
+
+                                // עדכון הרשימות
+                                userAppointments.remove(position);
+                                formattedAppointments.remove(position);
+                                adapter.notifyDataSetChanged();
+
+                                Toast.makeText(MyAppointmentsActivity.this, "התור נמחק!", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton("לא", null)
+                        .show();
+
+                return true;
+            }
         });
+
 
         btnBack.setOnClickListener(v -> {
             startActivity(new Intent(MyAppointmentsActivity.this, MainActivity.class));

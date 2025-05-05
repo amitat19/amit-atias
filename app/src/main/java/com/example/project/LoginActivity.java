@@ -4,14 +4,16 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
 
 public class LoginActivity extends AppCompatActivity {
-    private EditText etName, etPassword;
-    private Button btnLogin, btnRegister;
+    private TextInputEditText etUsername, etPassword;
+    private MaterialButton btnLogin;
+    private TextView tvRegister;
     private CustomerDataBase db;
 
     @Override
@@ -20,10 +22,10 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         // אתחול רכיבי הממשק
-        etName = findViewById(R.id.etName);
-        etPassword = findViewById(R.id.etPassword);
-        btnLogin = findViewById(R.id.btnLogin);
-        btnRegister = findViewById(R.id.btnRegister);
+        etUsername = findViewById(R.id.et_username);
+        etPassword = findViewById(R.id.et_password);
+        btnLogin = findViewById(R.id.btn_login);
+        tvRegister = findViewById(R.id.tv_register);
 
         // אתחול מסד הנתונים
         db = CustomerDataBase.getInstance(this);
@@ -32,24 +34,28 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String name = etName.getText().toString();
-                String password = etPassword.getText().toString();
+                String username = etUsername.getText().toString().trim();
+                String password = etPassword.getText().toString().trim();
 
-                if (name.isEmpty() || password.isEmpty()) {
+                // בדיקת תקינות השדות
+                if (username.isEmpty() || password.isEmpty()) {
                     Toast.makeText(LoginActivity.this, "נא למלא את כל השדות", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                if (db.isValidCustomer(name, password)) {
-                    // שמירת שם המשתמש ב-SharedPreferences
+                // בדיקת תקינות ההתחברות
+                if (db.isValidCustomer(username, password)) {
+                    // שמירת פרטי המשתמש ב-SharedPreferences
                     SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
                     SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString("username", name);
+                    editor.putString("username", username);
                     editor.apply();
 
                     Toast.makeText(LoginActivity.this, "התחברת בהצלחה", Toast.LENGTH_SHORT).show();
+                    
+                    // מעבר למסך הראשי
                     Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                    intent.putExtra("uname", name);
+                    intent.putExtra("uname", username);
                     startActivity(intent);
                     finish();
                 } else {
@@ -58,12 +64,11 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        // טיפול בלחיצה על כפתור ההרשמה
-        btnRegister.setOnClickListener(new View.OnClickListener() {
+        // טיפול בלחיצה על קישור ההרשמה
+        tvRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
-                startActivity(intent);
+                startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
             }
         });
     }

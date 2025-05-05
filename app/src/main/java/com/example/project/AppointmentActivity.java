@@ -1,6 +1,8 @@
 package com.example.project;
 
+import android.app.AlarmManager;
 import android.app.DatePickerDialog;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -57,7 +59,7 @@ public class AppointmentActivity extends AppCompatActivity {
         radioGroupStaff.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId != -1) {
                 RadioButton selectedStaffButton = findViewById(checkedId);
-                selectedStaff = selectedStaffButton.getTag().toString();
+                selectedStaff = selectedStaffButton.getText().toString();
                 spinnerTreatment.setEnabled(true);
             }
         });
@@ -150,23 +152,72 @@ public class AppointmentActivity extends AppCompatActivity {
             return;
         }
 
-        // קבלת שם המשתמש המחובר
-        SharedPreferences userPrefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
-        String username = userPrefs.getString("username", "");
-
-        if (username.isEmpty()) {
-            Toast.makeText(this, "אינך מחובר למערכת", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         // יצירת מחרוזת התור
-        String appointmentString = username + "_" + selectedStaff + "_" + selectedTreatment + "_" + selectedDate + "_" + selectedTime;
+        String appointmentString = customerName + "_" + selectedStaff + "_" + selectedTreatment + "_" + selectedDate + "_" + selectedTime;
         
         // שמירת התור במסד הנתונים
         customerDataBase.saveAppointment(appointmentString);
         
+        // תזמון תזכורת 24 שעות לפני התור
+        scheduleReminder(selectedDate, selectedTime, selectedStaff, selectedTreatment);
+        
         Toast.makeText(this, "התור נשמר בהצלחה!", Toast.LENGTH_SHORT).show();
         finish();
+    }
+
+    private void scheduleReminder(String date, String time, String barber, String treatment) {
+        try {
+            // פיצול התאריך והשעה
+            String[] dateParts = date.split("/");
+            String[] timeParts = time.split(":");
+            
+            int day = Integer.parseInt(dateParts[0]);
+            int month = Integer.parseInt(dateParts[1]) - 1; // חודשים מתחילים מ-0
+            int year = Integer.parseInt(dateParts[2]);
+            int hour = Integer.parseInt(timeParts[0]);
+            int minute = Integer.parseInt(timeParts[1]);
+
+            // יצירת תאריך התור
+            Calendar appointmentTime = Calendar.getInstance();
+            appointmentTime.set(year, month, day, hour, minute, 0);
+
+            // חישוב זמן התזכורת (24 שעות לפני התור)
+            Calendar reminderTime = (Calendar) appointmentTime.clone();
+            reminderTime.add(Calendar.HOUR_OF_DAY, -24);
+
+            // בדיקה שהתזכורת לא מתוזמנת לעבר
+            if (reminderTime.before(Calendar.getInstance())) {
+                Log.d("AppointmentActivity", "Cannot schedule reminder in the past");
+                return;
+            }
+
+            // יצירת Intent לתזכורת
+            Intent reminderIntent = new Intent(this, AppointmentReminderReceiver.class);
+            reminderIntent.putExtra("title", treatment + " עם " + barber);
+            reminderIntent.putExtra("time", time);
+
+            // יצירת PendingIntent
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                this,
+                (int) System.currentTimeMillis(),
+                reminderIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            // קבלת AlarmManager והגדרת התזכורת
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            if (alarmManager != null) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    reminderTime.getTimeInMillis(),
+                    pendingIntent
+                );
+                Log.d("AppointmentActivity", "Reminder scheduled for: " + reminderTime.getTime());
+            }
+
+        } catch (Exception e) {
+            Log.e("AppointmentActivity", "Error scheduling reminder: " + e.getMessage());
+        }
     }
 
     private String getSelectedBarber() {

@@ -16,6 +16,7 @@ import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -66,6 +67,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // התחל מוזיקת רקע
+        startService(new Intent(this, BackgroundMusicService.class));
+
         // אתחול ה-ActivityResultLaunchers
         cameraLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -105,8 +109,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         );
 
-
-
         // אתחול רכיבי ה-UI
         videoView = findViewById(R.id.video_view);
         welcomeText = findViewById(R.id.txt_welcome);
@@ -129,8 +131,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setHomeAsUpIndicator(R.drawable.swisserslogoremovebg);
+            getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu);
         }
 
         // קבלת שם משתמש מתוך Intent או SharedPreferences
@@ -196,8 +199,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // טיפול בלחיצות על פריטי הניווט
         navigationView.setNavigationItemSelectedListener(this);
 
-        // יצירת ערוץ התראות
+        // יצירת ערוץ ההתראות
         createNotificationChannel();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // עצור את מוזיקת הרקע כשהאפליקציה נסגרת
+        stopService(new Intent(this, BackgroundMusicService.class));
     }
 
     private void toggleBarbershopInfo() {
@@ -278,6 +288,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.nav_view_gallery) {
             Intent intent = new Intent(MainActivity.this, GalleryActivity.class);
             startActivity(intent);
+        } else if (id == R.id.nav_music_play) {
+            // התחל מוזיקה
+            Intent musicIntent = new Intent(this, BackgroundMusicService.class);
+            startService(musicIntent);
+            Toast.makeText(this, "מוזיקת רקע הופעלה", Toast.LENGTH_SHORT).show();
+        } else if (id == R.id.nav_music_stop) {
+            // עצור מוזיקה
+            Intent musicIntent = new Intent(this, BackgroundMusicService.class);
+            stopService(musicIntent);
+            Toast.makeText(this, "מוזיקת רקע הופסקה", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_logout) {
             SharedPreferences.Editor editor = getSharedPreferences("UserPrefs", MODE_PRIVATE).edit();
             editor.clear();

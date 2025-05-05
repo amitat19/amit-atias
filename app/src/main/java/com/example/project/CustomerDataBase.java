@@ -17,9 +17,11 @@ public class CustomerDataBase extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 3;
     private static final String TABLE_CUSTOMERS = "customers";
     private static final String TABLE_APPOINTMENTS = "appointments";
+    private static final String TABLE_USERS = "users";
     
     // עמודות טבלת לקוחות
-    private static final String COLUMN_NAME = "name";
+    private static final String COLUMN_USERNAME = "username";
+    private static final String COLUMN_PHONE = "phone";
     private static final String COLUMN_PASSWORD = "password";
     
     // עמודות טבלת תורים
@@ -48,20 +50,29 @@ public class CustomerDataBase extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         // יצירת טבלת לקוחות
-        String createCustomersTable = "CREATE TABLE " + TABLE_CUSTOMERS + " ("
-                + COLUMN_NAME + " TEXT PRIMARY KEY, "
-                + COLUMN_PASSWORD + " TEXT)";
+        String createCustomersTable = "CREATE TABLE " + TABLE_CUSTOMERS + " (" +
+                COLUMN_USERNAME + " TEXT PRIMARY KEY, " +
+                COLUMN_PHONE + " TEXT NOT NULL, " +
+                COLUMN_PASSWORD + " TEXT NOT NULL)";
         db.execSQL(createCustomersTable);
 
         // יצירת טבלת תורים
-        String createAppointmentsTable = "CREATE TABLE " + TABLE_APPOINTMENTS + " ("
-                + COLUMN_APPOINTMENT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + COLUMN_CUSTOMER_NAME + " TEXT, "
-                + COLUMN_BARBER_NAME + " TEXT, "
-                + COLUMN_TREATMENT + " TEXT, "
-                + COLUMN_DATE + " TEXT, "
-                + COLUMN_TIME + " TEXT)";
+        String createAppointmentsTable = "CREATE TABLE " + TABLE_APPOINTMENTS + " (" +
+                COLUMN_APPOINTMENT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                COLUMN_CUSTOMER_NAME + " TEXT NOT NULL, " +
+                COLUMN_BARBER_NAME + " TEXT NOT NULL, " +
+                COLUMN_TREATMENT + " TEXT NOT NULL, " +
+                COLUMN_DATE + " TEXT NOT NULL, " +
+                COLUMN_TIME + " TEXT NOT NULL)";
         db.execSQL(createAppointmentsTable);
+
+        // יצירת טבלת משתמשים
+        String createUsersTable = "CREATE TABLE " + TABLE_USERS + "("
+                + COLUMN_USERNAME + " TEXT PRIMARY KEY,"
+                + COLUMN_PHONE + " TEXT,"
+                + COLUMN_PASSWORD + " TEXT"
+                + ")";
+        db.execSQL(createUsersTable);
     }
 
     @Override
@@ -85,26 +96,28 @@ public class CustomerDataBase extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME, customer.getName());
+        values.put(COLUMN_USERNAME, customer.getUsername());
+        values.put(COLUMN_PHONE, customer.getPhone());
         values.put(COLUMN_PASSWORD, customer.getPassword());
 
-        db.insert(TABLE_CUSTOMERS, null, values);
+        db.insert(TABLE_USERS, null, values);
         db.close();
     }
 
-    public Customer getCustomerByName(String name) {
+    public Customer getCustomerByUsername(String username) {
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.query(TABLE_CUSTOMERS,
-                new String[]{COLUMN_NAME, COLUMN_PASSWORD},
-                COLUMN_NAME + "=?",
-                new String[]{name}, null, null, null);
+        Cursor cursor = db.query(TABLE_USERS,
+                new String[]{COLUMN_USERNAME, COLUMN_PHONE, COLUMN_PASSWORD},
+                COLUMN_USERNAME + "=?",
+                new String[]{username}, null, null, null);
 
         if (cursor != null && cursor.moveToFirst()) {
-            String customerName = cursor.getString(0);
-            String password = cursor.getString(1);
+            String customerUsername = cursor.getString(0);
+            String phone = cursor.getString(1);
+            String password = cursor.getString(2);
             cursor.close();
-            return new Customer(customerName, password);
+            return new Customer(customerUsername, phone, password);
         }
 
         if (cursor != null) {
@@ -165,7 +178,7 @@ public class CustomerDataBase extends SQLiteOpenHelper {
         try {
             String query = "SELECT " + COLUMN_CUSTOMER_NAME + ", " + COLUMN_DATE + ", " + COLUMN_TIME + 
                          " FROM " + TABLE_APPOINTMENTS +
-                         " WHERE UPPER(" + COLUMN_BARBER_NAME + ") = UPPER(?)" +
+                         " WHERE " + COLUMN_BARBER_NAME + " = ?" +
                          " ORDER BY " + COLUMN_DATE + ", " + COLUMN_TIME;
 
             Cursor cursor = db.rawQuery(query, new String[]{barberName});
@@ -286,12 +299,38 @@ public class CustomerDataBase extends SQLiteOpenHelper {
         return appointments;
     }
 
-    public boolean isValidCustomer(String name, String password) {
+    public boolean registerUser(String username, String phone, String password) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_USERNAME, username);
+        values.put(COLUMN_PHONE, phone);
+        values.put(COLUMN_PASSWORD, password);
+        
+        long result = db.insert(TABLE_USERS, null, values);
+        return result != -1;
+    }
+
+    public boolean isUsernameTaken(String username) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.query(TABLE_CUSTOMERS,
-                new String[]{COLUMN_NAME, COLUMN_PASSWORD},
-                COLUMN_NAME + "=? AND " + COLUMN_PASSWORD + "=?",
-                new String[]{name, password},
+                new String[]{COLUMN_USERNAME},
+                COLUMN_USERNAME + "=?",
+                new String[]{username},
+                null, null, null);
+
+        boolean isTaken = cursor != null && cursor.getCount() > 0;
+        if (cursor != null) {
+            cursor.close();
+        }
+        return isTaken;
+    }
+
+    public boolean isValidCustomer(String username, String password) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_USERS,
+                new String[]{COLUMN_USERNAME},
+                COLUMN_USERNAME + "=? AND " + COLUMN_PASSWORD + "=?",
+                new String[]{username, password},
                 null, null, null);
 
         boolean isValid = cursor != null && cursor.getCount() > 0;
@@ -326,7 +365,7 @@ public class CustomerDataBase extends SQLiteOpenHelper {
         
         try {
             String query = "SELECT COUNT(*) FROM " + TABLE_APPOINTMENTS +
-                         " WHERE UPPER(" + COLUMN_BARBER_NAME + ") = UPPER(?)" +
+                         " WHERE " + COLUMN_BARBER_NAME + " = ?" +
                          " AND " + COLUMN_DATE + " = ?" +
                          " AND " + COLUMN_TIME + " = ?";
             

@@ -1,18 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    
     <item
         android:id="@+id/nav_new_appointment"
-        android:title="קבע תור" />
+        android:icon="@drawable/ic_calendar"
+        android:title="קבע תור חדש" />
+        
     <item
         android:id="@+id/nav_my_appointments"
+        android:icon="@drawable/ic_appointments"
         android:title="התורים שלי" />
+        
     <item
         android:id="@+id/nav_upload_photo"
+        android:icon="@drawable/ic_camera"
         android:title="העלה תמונה" />
+        
     <item
         android:id="@+id/nav_view_gallery"
+        android:icon="@drawable/ic_gallery"
         android:title="צפה בגלריה" />
+        
+    <item
+        android:id="@+id/nav_music_play"
+        android:icon="@drawable/ic_play"
+        android:title="נגן מוזיקה" />
+        
+    <item
+        android:id="@+id/nav_music_stop"
+        android:icon="@drawable/ic_stop"
+        android:title="עצור מוזיקה" />
+        
     <item
         android:id="@+id/nav_logout"
+        android:icon="@drawable/ic_logout"
         android:title="התנתק" />
 </menu> 

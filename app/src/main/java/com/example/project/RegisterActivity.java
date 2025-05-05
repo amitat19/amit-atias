@@ -1,63 +1,73 @@
 package com.example.project;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
 
 public class RegisterActivity extends AppCompatActivity {
-
-    private EditText etName, etPassword;
-    private Button btnRegister;
+    private TextInputEditText etUsername, etPhone, etPassword;
+    private MaterialButton btnRegister;
+    private CustomerDataBase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        etName = findViewById(R.id.etName);
-        etPassword = findViewById(R.id.etPassword);
-        btnRegister = findViewById(R.id.btnRegister);
+        // אתחול רכיבי הממשק
+        etUsername = findViewById(R.id.et_username);
+        etPhone = findViewById(R.id.et_phone);
+        etPassword = findViewById(R.id.et_password);
+        btnRegister = findViewById(R.id.btn_register);
 
+        // אתחול מסד הנתונים
+        db = CustomerDataBase.getInstance(this);
+
+        // טיפול בלחיצה על כפתור ההרשמה
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                registerUser();
+                String username = etUsername.getText().toString().trim();
+                String phone = etPhone.getText().toString().trim();
+                String password = etPassword.getText().toString().trim();
+
+                // בדיקת תקינות השדות
+                if (username.isEmpty() || phone.isEmpty() || password.isEmpty()) {
+                    Toast.makeText(RegisterActivity.this, "נא למלא את כל השדות", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // בדיקה אם שם המשתמש כבר קיים
+                if (db.isUsernameTaken(username)) {
+                    Toast.makeText(RegisterActivity.this, "שם המשתמש כבר קיים במערכת", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // שמירת המשתמש במסד הנתונים
+                if (db.registerUser(username, phone, password)) {
+                    // שמירת פרטי המשתמש ב-SharedPreferences
+                    SharedPreferences sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString("username", username);
+                    editor.putString("phone", phone);
+                    editor.apply();
+
+                    Toast.makeText(RegisterActivity.this, "ההרשמה בוצעה בהצלחה", Toast.LENGTH_SHORT).show();
+                    
+                    // מעבר למסך הראשי
+                    Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+                    intent.putExtra("uname", username);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    Toast.makeText(RegisterActivity.this, "שגיאה בהרשמה", Toast.LENGTH_SHORT).show();
+                }
             }
         });
-    }
-
-    private void registerUser() {
-        String name = etName.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
-
-        if (name.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "אנא מלא את כל השדות", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        CustomerDataBase db = CustomerDataBase.getInstance(this);
-
-        // בדיקה אם שם המשתמש קיים במערכת
-        if (db.getCustomerByName(name) != null) {
-            Toast.makeText(this, "שם משתמש כבר קיים במערכת", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // הוספת לקוח חדש למאגר
-        Customer newCustomer = new Customer(name, password);
-        db.addCustomer(newCustomer);
-
-        Toast.makeText(this, "ההרשמה בוצעה בהצלחה!", Toast.LENGTH_SHORT).show();
-
-        // מעבר למסך הראשי
-        Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-        finish();
     }
 }

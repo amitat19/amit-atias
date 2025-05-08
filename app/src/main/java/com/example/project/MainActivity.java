@@ -173,22 +173,43 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
 
         // טיפול בלחיצות על כפתורי התחברות
-        btnLogin.setOnClickListener(v -> {
-            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+        btnLogin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity.this.startActivity(new Intent(MainActivity.this, LoginActivity.class));
+            }
         });
 
-        btnBarberLogin.setOnClickListener(v -> {
-            startActivity(new Intent(MainActivity.this, BarberLoginActivity.class));
+        btnBarberLogin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity.this.startActivity(new Intent(MainActivity.this, BarberLoginActivity.class));
+            }
         });
 
         // הגדרת לחצן הצגת מיקום
-        btnShowLocation.setOnClickListener(v -> openGoogleMaps());
+        btnShowLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity.this.openGoogleMaps();
+            }
+        });
 
         // הגדרת לחצן הצגת פרטי מספרה
-        btnShowDetails.setOnClickListener(v -> showBarbershopDetails());
+        btnShowDetails.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity.this.showBarbershopDetails();
+            }
+        });
 
         // כפתור להחלפה בין תמונה לטקסט
-        btnAboutBarbershop.setOnClickListener(v -> toggleBarbershopInfo());
+        btnAboutBarbershop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity.this.toggleBarbershopInfo();
+            }
+        });
 
         // הגדרת Drawer Toggle
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(

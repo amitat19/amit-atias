@@ -45,7 +45,7 @@ public class BarberLoginActivity extends AppCompatActivity {
                     editor.apply();
 
                     Toast.makeText(BarberLoginActivity.this, "התחברת בהצלחה", Toast.LENGTH_SHORT).show();
-                    
+
                     // מעבר למסך הראשי
                     Intent intent = new Intent(BarberLoginActivity.this, MainActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -61,7 +61,7 @@ public class BarberLoginActivity extends AppCompatActivity {
     private boolean isValidBarber(String username, String password) {
         // בדיקה מול רשימת הספרים הקבועה
         return (username.equals("doron") && password.equals("1234")) ||
-               (username.equals("shoval") && password.equals("1234")) ||
-               (username.equals("osher") && password.equals("1234"));
+                (username.equals("shoval") && password.equals("1234")) ||
+                (username.equals("osher") && password.equals("1234"));
     }
 } 
